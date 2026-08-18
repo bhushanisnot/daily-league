@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Daily League</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<script>
+/* ════════════════════════════════════════════════════════════════════════
+   ██  EVERYTHING YOU EVER EDIT IS IN THIS BOX.  ██
+   Nothing below it needs touching.
+
+   1. NAMES   — the roster. Remove a name and they vanish from the league.
+   2. GAMES   — the games in play, in the order you want them shown.
+   3. LOG     — one line per game per day:
+                  DATE | GAME | Name time, Name time, Name time
+
+                Times are m:ss (1:23), h:mm:ss (1:02:03), or plain
+                seconds (83). Order inside the line doesn't matter —
+                the clock decides.
+
+                DIDN'T PLAY? Write the name with no time after it, or
+                put a dash: "Kanav Jain" or "Kanav Jain -". Either way
+                they score nothing and it's recorded as a miss. Leave
+                the name off the line entirely and it's the same zero,
+                just not counted as a miss.
+
+   Fastest gets 10, then 9, 8 … down to 1 for tenth. Eleventh onwards
+   gets nothing. Identical times share the position and the points.
+   ════════════════════════════════════════════════════════════════════════ */
+
+const LEAGUE = "The Daily League";
+
+const NAMES = `
+Akash Jain, Shashank, Sreshtha Mondal, Aarav Parmar, Anuradha Dharwadkar, Mrudang Oza, Adnan Hasan, Shreyansh Choudhary, Shivangi Tikekar, Kanav Jain, Bhushan Patel, Nisha Patel
+`;
+
+const GAMES = `
+Queens, Tango, Zip, Wend, Crossclimb, Mini Sudoku, Patches
+`;
+
+const LOG = `
+2026-08-18 | Wend | Akash Jain 0:15, Shashank 0:16, Sreshtha Mondal 0:27, Aarav Parmar 0:15, Anuradha Dharwadkar -, Mrudang Oza 0:17, Adnan Hasan -, Shreyansh Choudhary 0:11, Shivangi Tikekar 0:07, Kanav Jain -, Bhushan Patel 0:24, Nisha Patel 0:23
+2026-08-18 | Zip | Akash Jain 0:09, Shashank 0:11, Sreshtha Mondal 0:12, Aarav Parmar 0:08, Anuradha Dharwadkar -, Mrudang Oza 0:11, Adnan Hasan -, Shreyansh Choudhary 0:08, Shivangi Tikekar 0:05, Kanav Jain -, Bhushan Patel 0:20, Nisha Patel 0:07
+2026-08-18 | Patches | Akash Jain 0:10, Shashank 0:15, Sreshtha Mondal 0:11, Aarav Parmar 0:08, Anuradha Dharwadkar -, Mrudang Oza 0:13, Adnan Hasan -, Shreyansh Choudhary 0:09, Shivangi Tikekar 0:08, Kanav Jain -, Bhushan Patel 0:13, Nisha Patel 0:12
+2026-08-18 | Mini Sudoku | Akash Jain 0:26, Shashank 0:36, Sreshtha Mondal 0:43, Aarav Parmar -, Anuradha Dharwadkar -, Mrudang Oza 1:14, Adnan Hasan -, Shreyansh Choudhary 0:18, Shivangi Tikekar 0:36, Kanav Jain -, Bhushan Patel 0:56, Nisha Patel 1:02
+2026-08-18 | Tango | Akash Jain 0:40, Shashank 0:53, Sreshtha Mondal 0:27, Aarav Parmar 0:34, Anuradha Dharwadkar -, Mrudang Oza 0:49, Adnan Hasan -, Shreyansh Choudhary 0:26, Shivangi Tikekar 0:27, Kanav Jain -, Bhushan Patel 0:38, Nisha Patel 0:24
+2026-08-18 | Queens | Akash Jain 0:21, Shashank 0:43, Sreshtha Mondal 0:26, Aarav Parmar 0:09, Anuradha Dharwadkar -, Mrudang Oza 0:34, Adnan Hasan -, Shreyansh Choudhary 0:17, Shivangi Tikekar 0:12, Kanav Jain -, Bhushan Patel 0:25, Nisha Patel 0:25
+2026-08-18 | Crossclimb | Akash Jain 3:10, Shashank 1:42, Sreshtha Mondal 1:09, Aarav Parmar 0:44, Anuradha Dharwadkar -, Mrudang Oza 1:41, Adnan Hasan -, Shreyansh Choudhary 0:40, Shivangi Tikekar 0:31, Kanav Jain -, Bhushan Patel 0:45, Nisha Patel 1:07
+`;
+
+/* ══════════════════ nothing to edit past this line ══════════════════ */
+</script>
+
+<style>
+  :root{
+    --board:#E4E8F0; --paper:#F7F8FB; --card:#FFFFFF;
+    --ink:#14171F; --muted:#5C6679; --faint:#8B94A6;
+    --rule:#C9CFDB; --rule-soft:#E1E5ED;
+    --indigo:#26307A; --indigo-soft:#EBEDF7;
+    --gold:#C9962B; --silver:#8E9AAA; --bronze:#A9683A; --miss:#DCE0E9; --plain:#9FB0D4;
+    --disp:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+    --body:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:"DM Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --pad:20px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--board);
+    background-image:linear-gradient(var(--rule) 1px,transparent 1px),linear-gradient(90deg,var(--rule) 1px,transparent 1px);
+    background-size:28px 28px;background-position:-1px -1px;
+    color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--indigo);outline-offset:2px;border-radius:4px}
+  ::selection{background:var(--indigo);color:#fff}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .wrap{max-width:760px;margin:0 auto;padding:28px 16px 72px}
+
+  /* masthead */
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--indigo);
+    display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .eyebrow::after{content:"";flex:1;height:1px;background:var(--rule)}
+  h1{font-family:var(--disp);font-weight:800;font-size:clamp(36px,10vw,52px);line-height:.94;letter-spacing:-.035em;margin:0 0 4px}
+  .tagline{color:var(--muted);font-size:13.5px;margin:0 0 20px}
+
+  /* controls */
+  .segmented{display:flex;gap:4px;background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:4px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none}
+  .segmented::-webkit-scrollbar{display:none}
+  .segmented button{flex:1 0 auto;border:0;background:transparent;color:var(--muted);font-size:13px;font-weight:500;
+    padding:8px 14px;border-radius:3px;white-space:nowrap;transition:background .13s,color .13s}
+  .segmented button[aria-pressed="true"]{background:var(--indigo);color:#fff;font-weight:600}
+
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+  .chip{border:1px solid var(--rule);background:var(--paper);color:var(--muted);border-radius:3px;
+    font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;padding:7px 11px;transition:.13s}
+  .chip:hover{color:var(--ink);border-color:var(--faint)}
+  .chip[aria-pressed="true"]{background:var(--indigo);border-color:var(--indigo);color:#fff}
+
+  /* panels */
+  .panel{background:var(--card);border:1px solid var(--rule);border-radius:4px;margin-bottom:14px;overflow:hidden}
+  .panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:14px var(--pad);border-bottom:1px solid var(--rule-soft)}
+  .panel-title{font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
+
+  /* podium */
+  .podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:1px;background:var(--rule-soft)}
+  .step{background:var(--card);padding:16px 12px;text-align:center;border-top:3px solid var(--miss)}
+  .step.p1{border-top-color:var(--gold)} .step.p2{border-top-color:var(--silver)} .step.p3{border-top-color:var(--bronze)}
+  .step .medal{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--faint)}
+  .step .nm{font-family:var(--disp);font-weight:700;font-size:16px;letter-spacing:-.02em;margin:5px 0 2px;overflow:hidden;text-overflow:ellipsis}
+  .step.p1 .nm{font-size:21px}
+  .step .pt{font-family:var(--mono);font-size:13px;color:var(--muted)}
+  .step .pt b{color:var(--ink);font-size:16px;font-weight:500}
+
+  /* kpis */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;background:var(--rule-soft)}
+  .kpi{background:var(--card);padding:14px var(--pad)}
+  .kpi dt{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin:0 0 4px}
+  .kpi dd{margin:0;font-family:var(--mono);font-size:20px;font-weight:500}
+  .kpi dd small{font-family:var(--body);font-size:11.5px;color:var(--muted);margin-left:5px}
+  .kpi dd.name{font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:-.02em}
+
+  /* tables */
+  table{width:100%;border-collapse:collapse}
+  th{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);
+    font-weight:400;text-align:right;padding:10px 8px;border-bottom:1px solid var(--rule-soft);white-space:nowrap}
+  th:first-child,td:first-child{text-align:left;padding-left:var(--pad)}
+  th:last-child,td:last-child{padding-right:var(--pad)}
+  td{padding:11px 8px;text-align:right;border-bottom:1px solid var(--rule-soft);font-family:var(--mono);font-size:13px}
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr:hover{background:var(--paper)}
+  td.pos{width:38px;color:var(--faint);font-size:12px}
+  tr.r1 td.pos{color:var(--gold)} tr.r2 td.pos{color:var(--silver)} tr.r3 td.pos{color:var(--bronze)}
+  td.who{font-family:var(--body);font-size:14.5px;font-weight:600;letter-spacing:-.01em}
+  td.pts{width:56px;font-size:17px;font-weight:500}
+  td.dim{color:var(--faint)}
+  .flame{color:var(--bronze);font-family:var(--mono);font-size:10.5px;margin-left:6px;letter-spacing:.04em}
+
+  /* form strip */
+  .strip{display:inline-flex;gap:3px}
+  .sq{width:8px;height:17px;border-radius:2px;background:var(--miss)}
+  .sq.g{background:var(--gold)} .sq.s{background:var(--silver)} .sq.b{background:var(--bronze)} .sq.p{background:var(--plain)}
+  .legend{display:flex;gap:15px;flex-wrap:wrap;padding:11px var(--pad);border-top:1px solid var(--rule-soft);
+    font-family:var(--mono);font-size:10px;color:var(--faint)}
+  .legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+  /* heats */
+  .heat{padding:12px var(--pad);border-bottom:1px solid var(--rule-soft)}
+  .heat:last-child{border-bottom:0}
+  .heat-day{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:7px}
+  .run{display:inline-flex;align-items:baseline;gap:6px;margin:0 16px 5px 0}
+  .run b{font-weight:600;font-size:13.5px}
+  .run .t{font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .run .p{font-family:var(--mono);font-size:11px;color:var(--indigo);font-weight:500}
+  .run.win b{color:var(--gold)}
+  .run.dnp b{color:var(--faint);font-weight:500}
+  .run.dnp .t{color:var(--faint);font-style:italic}
+  td.miss{color:var(--bronze)}
+
+  .empty{padding:38px var(--pad);text-align:center;color:var(--muted);font-size:14px}
+  .empty strong{display:block;font-family:var(--disp);font-size:19px;color:var(--ink);margin-bottom:6px}
+  .warn{background:#FBF3E3;border:1px solid #E4CF9E;border-radius:4px;padding:13px 16px;margin-bottom:16px;font-size:13px;color:#6A5628}
+  .warn b{display:block;font-family:var(--disp);font-size:14px;margin-bottom:5px;color:#4E3F17}
+  .warn ul{margin:0;padding-left:18px} .warn li{margin-top:3px}
+  .warn code{font-family:var(--mono);font-size:12px;background:#F1E5C7;padding:1px 4px;border-radius:2px}
+  .foot{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);text-align:center;margin-top:22px}
+
+  @media (max-width:560px){
+    :root{--pad:14px}
+    th,td{padding:10px 5px}
+    .podium{grid-template-columns:1fr}
+    .step{border-top-width:2px}
+    .hide-s{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">LinkedIn Games · daily league</div>
+  <h1 id="title">The Daily League</h1>
+  <p class="tagline" id="tagline"></p>
+
+  <div id="warnings"></div>
+  <div class="segmented" id="views"></div>
+  <div class="chips" id="periods"></div>
+  <div id="view"></div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+/* ─────────────────────────── parsing ─────────────────────────── */
+const WARN = [];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAYNAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad2 = n => String(n).padStart(2,'0');
+const ymd = d => d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+const today = () => ymd(new Date());
+const parseYmd = s => { const p = s.split('-').map(Number); return new Date(p[0],p[1]-1,p[2]); };
+const prettyDate = s => { const d = parseYmd(s); return DAYNAMES[d.getDay()]+' '+d.getDate()+' '+MONTHS[d.getMonth()]; };
+const shortDate = s => { const d = parseYmd(s); return d.getDate()+' '+MONTHS[d.getMonth()]; };
+const fmtTime = s => s >= 3600
+  ? Math.floor(s/3600)+':'+pad2(Math.floor(s%3600/60))+':'+pad2(Math.round(s%60))
+  : Math.floor(s/60)+':'+pad2(Math.round(s%60));
+
+const avgOf  = r => r.plays ? fmtTime(Math.round(r.time / r.plays)) : '—';
+const bestOf = r => r.plays ? fmtTime(r.best) : '—';
+
+const splitList = block => String(block).split(/[,\n]/).map(s => s.trim()).filter(Boolean);
+
+const ROSTER = splitList(NAMES);
+const GAMELIST = splitList(GAMES);
+const keyOf = s => s.trim().toLowerCase();
+const NAME_KEYS = new Map(ROSTER.map(n => [keyOf(n), n]));
+const GAME_KEYS = new Map(GAMELIST.map(g => [keyOf(g), g]));
+
+function readDate(raw){
+  const s = raw.trim();
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if(m) return m[1]+'-'+pad2(m[2])+'-'+pad2(m[3]);
+  m = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+  if(m) return m[3]+'-'+pad2(m[2])+'-'+pad2(m[1]);   // day first
+  return null;
+}
+
+function readTime(raw){
+  const s = raw.trim();
+  if(!/^\d+(:\d{1,2}){0,2}(\.\d+)?$/.test(s)) return 0;
+  const parts = s.split(':').map(Number);
+  if(parts.some(isNaN)) return 0;
+  if(parts.length === 1) return Math.round(parts[0]);
+  if(parts.length === 2) return Math.round(parts[0]*60 + parts[1]);
+  return Math.round(parts[0]*3600 + parts[1]*60 + parts[2]);
+}
+
+/* Ways of saying "didn't play". A bare name works too. */
+const SKIPS = new Set(['x','×','dnp','dna','dnf','skip','skipped','miss','missed',
+                       'na','n/a','none','nil','absent','0','0:00','00:00','—','–']);
+const isSkipToken = t => SKIPS.has(t.toLowerCase()) || /^-+$/.test(t);
+
+function parseLog(){
+  const runs = [];
+  const strayNames = new Set(), strayGames = new Set();
+
+  String(LOG).split('\n').forEach((raw, i) => {
+    const line = raw.trim();
+    if(!line || line.startsWith('#')) return;
+    const bits = line.split('|');
+    if(bits.length < 3){
+      WARN.push(`Line ${i+1} doesn't have three parts separated by <code>|</code> — skipped.`);
+      return;
+    }
+    const date = readDate(bits[0]);
+    if(!date){ WARN.push(`Line ${i+1}: <code>${esc(bits[0].trim())}</code> isn't a date I can read. Use 2026-08-18.`); return; }
+
+    const gk = keyOf(bits[1]);
+    if(!GAME_KEYS.has(gk)){ strayGames.add(bits[1].trim()); return; }
+    const game = GAME_KEYS.get(gk);
+
+    bits.slice(2).join('|').split(',').forEach(chunk => {
+      const c = chunk.trim();
+      if(!c) return;
+      const m = c.match(/^(.*?)\s+(\S+)$/);
+      let who, secs;
+
+      if(m && readTime(m[2]) > 0){                 // Name 1:23
+        who = m[1].trim(); secs = readTime(m[2]);
+      } else if(m && isSkipToken(m[2])){           // Name -
+        who = m[1].trim(); secs = null;
+      } else {                                     // bare name — didn't play
+        who = c; secs = null;
+      }
+
+      const nk = keyOf(who);
+      if(!NAME_KEYS.has(nk)){
+        if(m && NAME_KEYS.has(keyOf(m[1]))){
+          WARN.push(`Line ${i+1}: <code>${esc(m[2])}</code> isn't a time I can read. Use <code>1:23</code>, or leave it off for a miss.`);
+        } else {
+          strayNames.add(who);
+        }
+        return;
+      }
+      runs.push({ date, game, player: NAME_KEYS.get(nk), seconds: secs });
+    });
+  });
+
+  if(strayNames.size) WARN.push(`Not on the roster, so ignored: <code>${[...strayNames].map(esc).join('</code>, <code>')}</code>. Add them to NAMES or fix the spelling.`);
+  if(strayGames.size) WARN.push(`Not in the games list, so ignored: <code>${[...strayGames].map(esc).join('</code>, <code>')}</code>. Add them to GAMES or fix the spelling.`);
+  return runs;
+}
+
+/* ─────────────────────────── scoring ─────────────────────────── */
+/* One heat = one game on one day. Fastest takes 10, then 9 … 1 for tenth.
+   Equal times share a position and its points; the next runner drops by
+   however many were tied. */
+const pointsFor = rank => Math.max(0, 11 - rank);
+
+function scoreRuns(runs){
+  const heats = {};
+  runs.forEach(r => { const k = r.date+'|'+r.game; (heats[k] = heats[k] || []).push(r); });
+  const out = [];
+  Object.values(heats).forEach(list => {
+    list.filter(r => r.seconds === null)
+        .forEach(r => out.push(Object.assign({}, r, { rank:null, points:0, missed:true })));
+    const sorted = list.filter(r => r.seconds !== null).sort((a,b) => a.seconds - b.seconds);
+    let rank = 0, seen = 0, prev = null;
+    sorted.forEach(r => {
+      seen++;
+      if(r.seconds !== prev){ rank = seen; prev = r.seconds; }
+      out.push(Object.assign({}, r, { rank, points: pointsFor(rank), missed:false }));
+    });
+  });
+  return out;
+}
+
+function tally(rows){
+  const t = {};
+  rows.forEach(r => {
+    const x = t[r.player] || (t[r.player] = { player:r.player, pts:0, plays:0, missed:0, wins:0, top3:0, time:0, best:Infinity });
+    if(r.missed){ x.missed++; return; }
+    x.pts += r.points; x.plays++; x.time += r.seconds;
+    if(r.rank === 1) x.wins++;
+    if(r.rank <= 3) x.top3++;
+    if(r.seconds < x.best) x.best = r.seconds;
+  });
+  const list = Object.values(t).sort((a,b) =>
+    b.pts - a.pts || b.wins - a.wins || a.time - b.time || a.player.localeCompare(b.player));
+  list.forEach((r,i) => {
+    r.rank = (i && list[i-1].pts === r.pts && list[i-1].wins === r.wins) ? list[i-1].rank : i+1;
+  });
+  return list;
+}
+
+const RUNS = scoreRuns(parseLog());
+const DAYS = [...new Set(RUNS.map(r => r.date))].sort();
+
+/* who topped each day */
+const DAYRANK = {};
+DAYS.forEach(d => {
+  DAYRANK[d] = {};
+  tally(RUNS.filter(r => r.date === d)).forEach(r => { DAYRANK[d][r.player] = r.pts > 0 ? r.rank : 0; });
+});
+
+function streakOf(player){
+  let n = 0;
+  for(let i = DAYS.length - 1; i >= 0; i--){
+    if(DAYRANK[DAYS[i]][player] === 1) n++; else break;
+  }
+  return n;
+}
+
+/* ─────────────────────────── state ─────────────────────────── */
+const PERIODS = [['D','Today'],['W','This week'],['M','This month'],['Y','This year'],['A','All time']];
+const VIEWS = [['board','Standings'],['games','Games'],['players','Players']];
+const STRIP = 14;
+let ui = { view:'board', period:'W', game:'ALL', player:'' };
+
+function inPeriod(p){
+  if(p === 'A') return () => true;
+  const t = today();
+  if(p === 'D') return r => r.date === t;
+  if(p === 'M') return r => r.date.slice(0,7) === t.slice(0,7);
+  if(p === 'Y') return r => r.date.slice(0,4) === t.slice(0,4);
+  const d = parseYmd(t); d.setDate(d.getDate() - ((d.getDay()+6) % 7));
+  const from = ymd(d);
+  return r => r.date >= from;
+}
+
+/* ─────────────────────────── pieces ─────────────────────────── */
+function stripFor(player){
+  const days = DAYS.slice(-STRIP);
+  return `<span class="strip">${days.map(d => {
+    const pos = DAYRANK[d][player] || 0;
+    const cls = pos === 1 ? 'g' : pos === 2 ? 's' : pos === 3 ? 'b' : pos ? 'p' : '';
+    return `<span class="sq ${cls}" title="${prettyDate(d)} — ${pos ? pos + suffix(pos) : 'nothing'}"></span>`;
+  }).join('')}</span>`;
+}
+const suffix = n => n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th';
+
+function podium(table){
+  const order = [table[1], table[0], table[2]];
+  const cls = ['p2','p1','p3'], med = ['SECOND','FIRST','THIRD'];
+  return `<div class="panel"><div class="podium">${order.map((r,i) => `
+    <div class="step ${r ? cls[i] : ''}">
+      <div class="medal">${med[i]}</div>
+      <div class="nm">${r ? esc(r.player) : '—'}</div>
+      <div class="pt">${r ? '<b>'+r.pts+'</b> pts' : 'unclaimed'}</div>
+    </div>`).join('')}</div></div>`;
+}
+
+function emptyPanel(msg){
+  const latest = DAYS.length ? DAYS[DAYS.length-1] : null;
+  return `<div class="panel"><div class="empty"><strong>Nothing scored yet</strong>${msg}${
+    latest ? ` Latest results are from ${prettyDate(latest)}.` : ''}</div></div>`;
+}
+
+/* ─────────────────────────── views ─────────────────────────── */
+function viewBoard(rows){
+  const table = tally(rows);
+  if(!table.length) return emptyPanel('No times logged for this stretch.');
+  const runner = table.find(r => r.rank > 1);
+  const finished = rows.filter(r => !r.missed);
+  const heats = new Set(finished.map(r => r.date + r.game)).size;
+  const turnout = rows.length ? Math.round(finished.length / rows.length * 100) : 0;
+
+  const body = table.map(r => {
+    const st = streakOf(r.player);
+    return `<tr class="r${r.rank <= 3 ? r.rank : ''}">
+      <td class="pos">${r.rank}</td>
+      <td class="who">${esc(r.player)}${st > 1 ? `<span class="flame">${st} day run</span>` : ''}</td>
+      <td class="hide-s">${stripFor(r.player)}</td>
+      <td class="dim">${r.plays}</td>
+      <td class="${r.missed ? 'miss' : 'dim'}">${r.missed || '—'}</td>
+      <td class="dim">${r.wins}</td>
+      <td class="dim hide-s">${avgOf(r)}</td>
+      <td class="pts">${r.pts}</td>
+    </tr>`;
+  }).join('');
+
+  return podium(table) + `
+  <div class="panel"><dl class="kpis">
+    <div class="kpi"><dt>Leader</dt><dd class="name">${esc(table[0].player)}</dd></div>
+    <div class="kpi"><dt>Margin</dt><dd>${runner ? '+' + (table[0].pts - runner.pts) : '—'}</dd></div>
+    <div class="kpi"><dt>Heats</dt><dd>${heats}</dd></div>
+    <div class="kpi"><dt>Fastest solve</dt><dd>${finished.length ? fmtTime(Math.min(...finished.map(r => r.seconds))) : '—'}</dd></div>
+    <div class="kpi"><dt>Turnout</dt><dd>${turnout}<small>% of logged slots</small></dd></div>
+  </dl></div>
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">Table</span><span class="panel-title">10 · 9 · 8 … 1</span></div>
+    <table>
+      <thead><tr><th>#</th><th>Player</th><th class="hide-s">Last ${Math.min(DAYS.length,STRIP)} days</th>
+        <th>Played</th><th>Missed</th><th>Wins</th><th class="hide-s">Avg</th><th>Points</th></tr></thead>
+      <tbody>${body}</tbody>
+    </table>
+    <div class="legend">
+      <span><i style="background:var(--gold)"></i>Topped the day</span>
+      <span><i style="background:var(--silver)"></i>Second</span>
+      <span><i style="background:var(--bronze)"></i>Third</span>
+      <span><i style="background:var(--plain)"></i>Scored</span>
+      <span><i style="background:var(--miss)"></i>Nothing</span>
+    </div>
+  </div>`;
+}
+
+function viewGames(rows){
+  const played = GAMELIST.filter(g => RUNS.some(r => r.game === g));
+  if(!played.length) return emptyPanel('No games logged yet.');
+  if(ui.game !== 'ALL' && !played.includes(ui.game)) ui.game = 'ALL';
+
+  const picker = `<div class="chips">
+    <button class="chip" data-game="ALL" aria-pressed="${ui.game === 'ALL'}">All games</button>
+    ${played.map(g => `<button class="chip" data-game="${esc(g)}" aria-pressed="${ui.game === g}">${esc(g)}</button>`).join('')}
+  </div>`;
+
+  if(ui.game === 'ALL'){
+    const table = tally(rows);
+    if(!table.length) return picker + emptyPanel('Nothing in this stretch.');
+    const cols = played.filter(g => rows.some(r => r.game === g));
+    const body = table.map(r => `<tr>
+      <td class="who">${esc(r.player)}</td>
+      ${cols.map(g => {
+        const p = rows.filter(x => x.player === r.player && x.game === g).reduce((a,x) => a + x.points, 0);
+        return `<td class="${p ? '' : 'dim'}">${p}</td>`;
+      }).join('')}
+      <td class="pts">${r.pts}</td></tr>`).join('');
+    return picker + `<div class="panel">
+      <div class="panel-head"><span class="panel-title">Points by game</span></div>
+      <table><thead><tr><th>Player</th>${cols.map(g => `<th>${esc(g)}</th>`).join('')}<th>Total</th></tr></thead>
+      <tbody>${body}</tbody></table></div>`;
+  }
+
+  const gr = rows.filter(r => r.game === ui.game);
+  if(!gr.length) return picker + emptyPanel('Nobody has played this one in this stretch.');
+  const table = tally(gr);
+  const ran = gr.filter(r => !r.missed);
+  const quickest = table.filter(r => r.plays).reduce((a,b) => b.best < a.best ? b : a, { best:Infinity, player:'—' });
+
+  const body = table.map(r => `<tr class="r${r.rank <= 3 ? r.rank : ''}">
+    <td class="pos">${r.rank}</td>
+    <td class="who">${esc(r.player)}</td>
+    <td class="dim">${r.plays}</td>
+    <td class="${r.missed ? 'miss' : 'dim'}">${r.missed || '—'}</td>
+    <td class="dim">${r.wins}</td>
+    <td class="dim hide-s">${r.top3}</td>
+    <td>${bestOf(r)}</td>
+    <td class="dim hide-s">${avgOf(r)}</td>
+    <td class="pts">${r.pts}</td></tr>`).join('');
+
+  const recent = [...new Set(gr.map(r => r.date))].sort().reverse().slice(0,6).map(d => `
+    <div class="heat"><div class="heat-day">${prettyDate(d)}</div>
+      ${gr.filter(r => r.date === d)
+           .sort((a,b) => (a.rank || 99) - (b.rank || 99))
+           .map(r => r.missed
+             ? `<span class="run dnp"><b>${esc(r.player)}</b><span class="t">didn't play</span></span>`
+             : `<span class="run ${r.rank === 1 ? 'win' : ''}"><b>${esc(r.player)}</b><span class="t">${fmtTime(r.seconds)}</span><span class="p">+${r.points}</span></span>`
+      ).join('')}
+    </div>`).join('');
+
+  return picker + `
+  <div class="panel"><dl class="kpis">
+    <div class="kpi"><dt>Quickest</dt><dd>${quickest.best < Infinity ? fmtTime(quickest.best) : '—'}<small>${esc(quickest.player)}</small></dd></div>
+    <div class="kpi"><dt>Heats</dt><dd>${new Set(ran.map(r => r.date)).size}</dd></div>
+    <div class="kpi"><dt>Field average</dt><dd>${ran.length ? fmtTime(Math.round(ran.reduce((a,r) => a + r.seconds, 0) / ran.length)) : '—'}</dd></div>
+    <div class="kpi"><dt>Misses</dt><dd>${gr.length - ran.length}</dd></div>
+  </dl></div>
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">${esc(ui.game)}</span></div>
+    <table><thead><tr><th>#</th><th>Player</th><th>Played</th><th>Missed</th><th>Wins</th><th class="hide-s">Top 3</th>
+      <th>Best</th><th class="hide-s">Avg</th><th>Points</th></tr></thead><tbody>${body}</tbody></table>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">Recent heats</span></div>${recent}
+  </div>`;
+}
+
+function viewPlayers(rows){
+  const everyone = tally(RUNS);
+  if(!everyone.length) return emptyPanel('No results yet.');
+  if(!ui.player || !everyone.some(r => r.player === ui.player)) ui.player = everyone[0].player;
+
+  const picker = `<div class="chips">${everyone.map(r =>
+    `<button class="chip" data-player="${esc(r.player)}" aria-pressed="${ui.player === r.player}">${esc(r.player)}</button>`).join('')}</div>`;
+
+  const mine = rows.filter(r => r.player === ui.player);
+  if(!mine.length) return picker + emptyPanel('Nothing logged for them in this stretch.');
+  const table = tally(rows);
+  const me = table.find(r => r.player === ui.player);
+  const st = streakOf(ui.player);
+
+  const body = GAMELIST.filter(g => mine.some(r => r.game === g)).map(g => {
+    const gr = mine.filter(r => r.game === g);
+    const ran = gr.filter(r => !r.missed);
+    return `<tr>
+      <td class="who">${esc(g)}</td>
+      <td class="dim">${ran.length}</td>
+      <td class="${gr.length - ran.length ? 'miss' : 'dim'}">${(gr.length - ran.length) || '—'}</td>
+      <td class="dim">${ran.filter(r => r.rank === 1).length}</td>
+      <td class="dim">${ran.length ? (ran.reduce((a,r) => a + r.rank, 0) / ran.length).toFixed(1) : '—'}</td>
+      <td>${ran.length ? fmtTime(Math.min(...ran.map(r => r.seconds))) : '—'}</td>
+      <td class="dim hide-s">${ran.length ? fmtTime(Math.round(ran.reduce((a,r) => a + r.seconds, 0) / ran.length)) : '—'}</td>
+      <td class="pts">${ran.reduce((a,r) => a + r.points, 0)}</td></tr>`;
+  }).join('');
+
+  return picker + `
+  <div class="panel">
+    <dl class="kpis">
+      <div class="kpi"><dt>Position</dt><dd>${me.rank}<small>of ${table.length}</small></dd></div>
+      <div class="kpi"><dt>Points</dt><dd>${me.pts}</dd></div>
+      <div class="kpi"><dt>Wins</dt><dd>${me.wins}<small>${me.plays} played</small></dd></div>
+      <div class="kpi"><dt>Top three</dt><dd>${me.top3}</dd></div>
+      <div class="kpi"><dt>Best solve</dt><dd>${bestOf(me)}</dd></div>
+      ${me.missed ? `<div class="kpi"><dt>Missed</dt><dd>${me.missed}<small>of ${me.plays + me.missed} slots</small></dd></div>` : ''}
+      ${st > 1 ? `<div class="kpi"><dt>Current run</dt><dd>${st}<small>days on top</small></dd></div>` : ''}
+    </dl>
+    <div class="legend"><span>Last ${Math.min(DAYS.length,STRIP)} days</span>${stripFor(ui.player)}</div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">${esc(ui.player)} · game by game</span></div>
+    <table><thead><tr><th>Game</th><th>Played</th><th>Missed</th><th>Wins</th><th>Avg finish</th>
+      <th>Best</th><th class="hide-s">Avg time</th><th>Points</th></tr></thead><tbody>${body}</tbody></table>
+  </div>`;
+}
+
+/* ─────────────────────────── render ─────────────────────────── */
+function render(){
+  document.getElementById('title').textContent = LEAGUE;
+  document.getElementById('tagline').textContent =
+    ROSTER.length + ' players · ' + GAMELIST.length + ' games · ' + DAYS.length + ' days logged';
+
+  document.getElementById('views').innerHTML = VIEWS.map(([k,l]) =>
+    `<button data-view="${k}" aria-pressed="${ui.view === k}">${l}</button>`).join('');
+  document.getElementById('periods').innerHTML = PERIODS.map(([k,l]) =>
+    `<button class="chip" data-period="${k}" aria-pressed="${ui.period === k}">${l}</button>`).join('');
+
+  document.getElementById('warnings').innerHTML = WARN.length
+    ? `<div class="warn"><b>Check the log</b><ul>${WARN.map(w => '<li>'+w+'</li>').join('')}</ul></div>` : '';
+
+  const rows = RUNS.filter(inPeriod(ui.period));
+  document.getElementById('view').innerHTML =
+    ui.view === 'board' ? viewBoard(rows) : ui.view === 'games' ? viewGames(rows) : viewPlayers(rows);
+
+  document.getElementById('foot').textContent = DAYS.length
+    ? 'Results through ' + shortDate(DAYS[DAYS.length-1]) : '';
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  if(b.dataset.view){ ui.view = b.dataset.view; }
+  else if(b.dataset.period){ ui.period = b.dataset.period; }
+  else if(b.dataset.game){ ui.game = b.dataset.game; }
+  else if(b.dataset.player){ ui.player = b.dataset.player; }
+  else return;
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
